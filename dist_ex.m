@@ -31,23 +31,30 @@ d2(2,12:15) = -0.3;
 [Kx, Kd, gamma_N] = generate_controller(edges, edge_delay, q_vec, r_vec,H);
 %%% With feedforward %%%
 x = zeros(nbr_states,T+1);
+cost_ff = 0;
 for ti = 1:T
     [v,u] = calculate_inputs(Kx, Kd, gamma_N/q_vec(N), x(:,ti), d(:,ti:end)+d2(:,ti:end), H,edge_delay)
     x(:,ti+1) = A*x(:,ti)+B*[v;u]+ [d(:,ti) + d2(:,ti);zeros(sum(edge_delay),1)];
+    cost_ff = cost_ff + x(1:N,ti+1)'*diag(q_vec)*x(1:N,ti+1);
 end
 
-
+cost_no_ff = 0;
 %%% Without feedforward %%%
-z = zeros(nbr_states,T+1)
+z = zeros(nbr_states,T+1);
 for ti = 1:T
     z(:,ti+1) = A*z(:,ti)+B*Kx*z(:,ti)+ [d(:,ti) + d2(:,ti);zeros(sum(edge_delay),1)];
+    cost_no_ff = cost_no_ff + z(1:N,ti+1)'*diag(q_vec)*z(1:N,ti+1);
 end
+display('Cost with feedforward')
+cost_ff
+display('Cost without feedforward')
+cost_no_ff
 
 %Plotitng
 figure(1)
 clf
-h = 90
-h1 = h+1
+h = 90;
+h1 = h+1;
 subplot(2,1,1)
 plot(0:h,x(1:5,1:h1),'Linewidth',3)
 title('With feedforward','FontSize', 16)
